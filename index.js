@@ -7,10 +7,9 @@ const PORT = 8888;
 app.use(express.json());
 
 app.post("/take_screenshots", (req, res) => {
-    const { url } = req.body;
     res.status(200).send({ msg: "I will take care of it." });
 
-    recordScreenshots(url);
+    req.body.urlArray.forEach((url) => recordScreenshots(url));
     // postWebsiteToStrapi();
 });
 
