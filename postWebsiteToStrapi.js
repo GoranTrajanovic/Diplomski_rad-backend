@@ -1,6 +1,11 @@
-import { ApolloClient, InMemoryCache, gql, useMutation } from "@apollo/client";
+/* const {
+    ApolloClient,
+    InMemoryCache,
+    gql,
+    useMutation,
+} = require("@apollo/client");
 
-export default async function postWebsiteToStrapi() {
+module.exports.postWebsiteToStrapi = async function () {
     try {
         const client = new ApolloClient({
             uri: `${process.env.NEXT_PUBLIC_STRAPI_ROOT}/graphql`,
@@ -32,4 +37,5 @@ export default async function postWebsiteToStrapi() {
     } catch (e) {
         console.log("error from LOURLs", e);
     }
-}
+};
+ */

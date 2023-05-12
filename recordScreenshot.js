@@ -1,9 +1,10 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import fs, { mkdirSync } from "fs";
-import { chromium, firefox, webkit, devices } from "playwright";
-import prepareURL from "./helper_functions/prepareURL";
+const fs = require("fs");
+const { mkdirSync } = require("fs");
+const { chromium, firefox, webkit, devices } = require("playwright");
+const prepareURL = require("./helper_functions/prepareURL");
 
-export default function recordScreenshots(URL) {
+module.exports = function (URL) {
     const { dir, URLSubpath } = prepareURL(URL);
 
     let timeAtStart = Date.now();
@@ -11,29 +12,30 @@ export default function recordScreenshots(URL) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     try {
-        takeScreenshot(URL, URLSubpath, "chromium", "desktop");
-        takeScreenshot(URL, URLSubpath, "firefox", "desktop");
-        takeScreenshot(URL, URLSubpath, "webkit", "desktop");
-        takeScreenshot(URL, URLSubpath, "chromium", "mobile");
-        takeScreenshot(URL, URLSubpath, "webkit", "mobile");
-
-        res.status(200).json({ url: req.body.url });
-        console.log(
-            `It took ${
-                (Date.now() - timeAtStart) / 1000
-            } seconds to complete ${URLWithoutHttps}`
-        );
+        Promise.all([
+            takeScreenshot(dir, URL, URLSubpath, "chromium", "desktop"),
+            takeScreenshot(dir, URL, URLSubpath, "firefox", "desktop"),
+            takeScreenshot(dir, URL, URLSubpath, "webkit", "desktop"),
+            takeScreenshot(dir, URL, URLSubpath, "chromium", "mobile"),
+            takeScreenshot(dir, URL, URLSubpath, "webkit", "mobile"),
+        ]).then(() => {
+            console.log(
+                `It took ${
+                    (Date.now() - timeAtStart) / 1000
+                } seconds to complete ${URLSubpath}`
+            );
+        });
 
         // uploadToBackend(dir, URLWithoutHttps);
     } catch (err) {
         console.log(err);
-        res.status(404).json({ errorMsg: "Error occured." });
+        res.status(404).json({ errorMsg: "Error occured in Express API." });
     }
-}
+};
 
-async function takeScreenshot(URL, URLSubpath, browser, device) {
-    console.log(`Processing screenshot for: ${browser} ${device}`);
-    let browser = await (browser === "chromium"
+async function takeScreenshot(dir, URL, URLSubpath, browser, device) {
+    console.log(`Processing: ${URL} | ${browser} | ${device}`);
+    let browserPW = await (browser === "chromium"
         ? chromium
         : browser === "firefox"
         ? firefox
@@ -41,13 +43,15 @@ async function takeScreenshot(URL, URLSubpath, browser, device) {
         ? webkit
         : null
     ).launch();
-    let context = await browser.newContext(
+    // let browserPW = await chromium.launch();
+    // let context = await browserPW.newContext();
+    let context = await browserPW.newContext(
         device === "mobile" ? devices["iPhone 11"] : null
     );
     let page = await context.newPage();
     await page.goto(URL);
     await page.screenshot({
-        path: `${dir}/${URLSubpath}_-_${browser}_-_${device}.png`,
+        path: `app/screenshots/${dir}/${URLSubpath}_-_${browser}_-_${device}.png`,
         fullPage: true,
     });
 }
